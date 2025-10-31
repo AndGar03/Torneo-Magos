@@ -43,6 +43,21 @@ public interface DueloListener {
      * @param perdedor mago perdedor
      */
     void onGanador(CampoDuelo campo, Mago ganador, Mago perdedor);
+
+    /**
+     * Notifica que un mago está aturdido.
+     * @param campo campo de duelo origen
+     * @param mago mago que está aturdido
+     */
+    void onMagoAturdido(CampoDuelo campo, Mago mago);
+
+    /**
+     * Notifica que inicia un nuevo duelo entre dos magos.
+     * @param campo campo de duelo origen
+     * @param magoA primer mago
+     * @param magoB segundo mago
+     */
+    void onDueloIniciado(CampoDuelo campo, Mago magoA, Mago magoB);
 }
 
 

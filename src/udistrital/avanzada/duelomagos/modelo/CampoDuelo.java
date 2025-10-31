@@ -85,17 +85,18 @@ public class CampoDuelo {
 
         notificarTurno(atacante, defensor);
 
-        // Si el atacante está aturdido, espera 0-250 ms
+        // Si el atacante está aturdido, espera 1 segundo
         if (atacante.isEstaAturdido()) {
-            dormirSinInterrumpir(random.nextInt(251));
+            notificarMagoAturdido(atacante);
+            dormirSinInterrumpir(1000);
             atacante.setEstaAturdido(false);
         }
 
         // Selección de hechizo y lanzamiento
         Hechizo hechizo = seleccionarHechizoAleatorio();
 
-        // Espera simulando tiempo de conjuro y reacción del rival 0-500 ms
-        dormirSinInterrumpir(random.nextInt(501));
+        // Espera simulando tiempo de conjuro y reacción del rival: 1 segundo
+        dormirSinInterrumpir(1000);
 
         int puntos = calcularPuntos(hechizo);
         atacante.agregarPuntos(puntos);
@@ -181,6 +182,12 @@ public class CampoDuelo {
     private void notificarGanador(Mago ganador, Mago perdedor) {
         for (DueloListener l : listeners) {
             l.onGanador(this, ganador, perdedor);
+        }
+    }
+
+    private void notificarMagoAturdido(Mago mago) {
+        for (DueloListener l : listeners) {
+            l.onMagoAturdido(this, mago);
         }
     }
 }

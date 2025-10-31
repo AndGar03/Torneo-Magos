@@ -53,6 +53,7 @@ public class Torneo {
             CampoDuelo campo = new CampoDuelo(m1, m2, hechizosCompartidos);
             for (DueloListener l : listeners) {
                 campo.addListener(l);
+                l.onDueloIniciado(campo, m1, m2);
             }
             Thread t1 = new Thread(m1, "Duelo-" + m1.getNombre());
             Thread t2 = new Thread(m2, "Duelo-" + m2.getNombre());
@@ -67,6 +68,9 @@ public class Torneo {
             }
             // Decide el ganador: el que superó el puntaje de victoria, o por mayor puntaje
             Mago ganador = (m1.getPuntosAcumulados() > m2.getPuntosAcumulados()) ? m1 : m2;
+            // Reiniciar puntos para el siguiente duelo
+            m1.resetearPuntos();
+            m2.resetearPuntos();
             enCompetencia.add(ganador);
         }
         return enCompetencia.get(0);

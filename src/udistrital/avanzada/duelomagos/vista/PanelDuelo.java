@@ -144,6 +144,35 @@ public class PanelDuelo extends JPanel {
         txtLog.append("Ganador del duelo: " + ganador.getNombre() + "\n");
         txtLog.setCaretPosition(txtLog.getDocument().getLength());
     }
+
+    /**
+     * Muestra que inicia un nuevo duelo con separador visual.
+     */
+    public void mostrarDueloIniciado(Mago magoA, Mago magoB) {
+        // Actualizar las etiquetas superiores con los magos que compiten ahora
+        lblMagoA.setText(magoA.getNombre() + " (" + magoA.getCasaMagica() + ")");
+        lblMagoB.setText(magoB.getNombre() + " (" + magoB.getCasaMagica() + ")");
+        
+        // Reiniciar los puntajes mostrados
+        lblPuntosA.setText("Puntos A: 0");
+        lblPuntosB.setText("Puntos B: 0");
+        barA.setValue(0);
+        barB.setValue(0);
+        
+        // Agregar separador visual en el log
+        txtLog.append("\n" + "=".repeat(80) + "\n");
+        txtLog.append("DUELO: " + magoA.getNombre() + " vs " + magoB.getNombre() + "\n");
+        txtLog.append("=".repeat(80) + "\n");
+        txtLog.setCaretPosition(txtLog.getDocument().getLength());
+    }
+
+    /**
+     * Muestra que un mago está aturdido.
+     */
+    public void mostrarMagoAturdido(Mago mago) {
+        txtLog.append(">>> " + mago.getNombre() + " está ATURDIDO y no puede moverse <<<\n");
+        txtLog.setCaretPosition(txtLog.getDocument().getLength());
+    }
 }
 
 

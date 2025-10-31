@@ -107,6 +107,15 @@ public class Mago implements Runnable {
     }
 
     /**
+     * Reinicia los puntos acumulados del mago a cero.
+     */
+    public void resetearPuntos() {
+        this.puntosAcumulados = 0;
+        this.hechizosLanzados = 0;
+        this.estaAturdido = false;
+    }
+
+    /**
      * Incrementa el contador de hechizos lanzados.
      */
     public void incrementarHechizosLanzados() {

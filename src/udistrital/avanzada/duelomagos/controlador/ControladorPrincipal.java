@@ -136,6 +136,16 @@ public class ControladorPrincipal implements DueloLanzadoListener {
         SwingUtilities.invokeLater(() -> vista.getPanelDuelo().mostrarGanador(ganador, perdedor));
     }
 
+    @Override
+    public void onMagoAturdido(CampoDuelo campo, Mago mago) {
+        SwingUtilities.invokeLater(() -> vista.getPanelDuelo().mostrarMagoAturdido(mago));
+    }
+
+    @Override
+    public void onDueloIniciado(CampoDuelo campo, Mago magoA, Mago magoB) {
+        SwingUtilities.invokeLater(() -> vista.getPanelDuelo().mostrarDueloIniciado(magoA, magoB));
+    }
+
     /**
      * @return panel de duelo asociado a la vista
      */
