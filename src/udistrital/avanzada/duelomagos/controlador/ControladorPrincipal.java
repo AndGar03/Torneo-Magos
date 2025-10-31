@@ -66,11 +66,19 @@ public class ControladorPrincipal implements DueloLanzadoListener {
                 Properties props = CargadorProperties.cargar(archivoProperties);
                 this.magosConfig = CargadorProperties.construirMagosConfig(props);
                 this.hechizos = CargadorProperties.construirHechizos(props);
-                vista.getPanelDuelo().mostrarMensaje("Archivo cargado: " + archivoProperties.getName());
-                vista.getPanelDuelo().mostrarParticipantes(magosConfig);
-				vista.getPanelDuelo().configurarPuntajeMax(udistrital.avanzada.duelomagos.modelo.CampoDuelo.PUNTAJE_VICTORIA);
+                
+                // Validar datos cargados
+                if (magosConfig.size() < 2 || hechizos.isEmpty()) {
+                    vista.getPanelDuelo().mostrarMensaje("Advertencia: Archivo cargado pero incompleto. Se requiere al menos 2 magos y 1 hechizo válido.");
+                    this.archivoProperties = null; // Marcar como no válido
+                } else {
+                    vista.getPanelDuelo().mostrarMensaje("Archivo cargado correctamente: " + archivoProperties.getName());
+                    vista.getPanelDuelo().mostrarParticipantes(magosConfig);
+                    vista.getPanelDuelo().configurarPuntajeMax(udistrital.avanzada.duelomagos.modelo.CampoDuelo.PUNTAJE_VICTORIA);
+                }
             } catch (IOException ex) {
                 vista.getPanelDuelo().mostrarMensaje("Error al cargar propiedades: " + ex.getMessage());
+                this.archivoProperties = null; // Limpiar referencia en caso de error
             }
         }
     }
@@ -79,8 +87,16 @@ public class ControladorPrincipal implements DueloLanzadoListener {
      * Inicia el torneo en un hilo separado para no bloquear el EDT.
      */
     public void iniciarTorneo() {
+        if (archivoProperties == null) {
+            vista.getPanelDuelo().mostrarMensaje("Debe cargar un archivo properties primero.");
+            return;
+        }
         if (magosConfig.size() < 2) {
-            vista.getPanelDuelo().mostrarMensaje("Debe cargar al menos dos magos en properties.");
+            vista.getPanelDuelo().mostrarMensaje("Error: El archivo properties debe contener al menos dos magos válidos.");
+            return;
+        }
+        if (hechizos.isEmpty()) {
+            vista.getPanelDuelo().mostrarMensaje("Error: El archivo properties debe contener al menos un hechizo válido.");
             return;
         }
         Thread hilo = new Thread(() -> ejecutarTorneo(), "Hilo-Torneo");

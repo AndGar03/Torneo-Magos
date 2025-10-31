@@ -57,13 +57,12 @@ public final class CargadorProperties {
         int count = Integer.parseInt(props.getProperty("magos.count", "0"));
         List<MagoConfig> magos = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            String nombre = props.getProperty("magos." + i + ".nombre", "Mago" + i);
-            String casa = props.getProperty("magos." + i + ".casa", "Casa" + i);
-            magos.add(new MagoConfig(nombre, casa));
-        }
-        if (magos.isEmpty()) {
-            magos.add(new MagoConfig("Mago A", "Roja"));
-            magos.add(new MagoConfig("Mago B", "Azul"));
+            String nombre = props.getProperty("magos." + i + ".nombre");
+            String casa = props.getProperty("magos." + i + ".casa");
+            // Solo agregar si ambos valores existen
+            if (nombre != null && !nombre.trim().isEmpty() && casa != null && !casa.trim().isEmpty()) {
+                magos.add(new MagoConfig(nombre, casa));
+            }
         }
         return magos;
     }
@@ -77,13 +76,17 @@ public final class CargadorProperties {
         int count = Integer.parseInt(props.getProperty("hechizos.count", "0"));
         List<Hechizo> hechizos = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            String nombre = props.getProperty("hechizos." + i + ".nombre", "Hechizo" + i);
-            int poder = Integer.parseInt(props.getProperty("hechizos." + i + ".poder", "30"));
-            hechizos.add(new Hechizo(nombre, poder));
-        }
-        if (hechizos.isEmpty()) {
-            hechizos.add(new Hechizo("Chispa", 20));
-            hechizos.add(new Hechizo("Onda", 25));
+            String nombre = props.getProperty("hechizos." + i + ".nombre");
+            String poderStr = props.getProperty("hechizos." + i + ".poder");
+            // Solo agregar si ambos valores existen y son válidos
+            if (nombre != null && !nombre.trim().isEmpty() && poderStr != null) {
+                try {
+                    int poder = Integer.parseInt(poderStr);
+                    hechizos.add(new Hechizo(nombre, poder));
+                } catch (NumberFormatException e) {
+                    // Ignorar hechizos con poder inválido
+                }
+            }
         }
         return hechizos;
     }
