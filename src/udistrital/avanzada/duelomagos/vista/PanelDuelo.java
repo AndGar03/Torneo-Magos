@@ -6,10 +6,10 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.util.List;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import udistrital.avanzada.duelomagos.modelo.Hechizo;
@@ -17,8 +17,8 @@ import udistrital.avanzada.duelomagos.modelo.Mago;
 import udistrital.avanzada.duelomagos.modelo.util.CargadorProperties.MagoConfig;
 
 /**
- * Panel que visualiza el estado del duelo y un registro textual de eventos.
- * La vista es "tonta": solo muestra datos provistos por el controlador.
+ * Panel que visualiza el estado del duelo estilo Pokémon.
+ * Interfaz con imágenes de magos y mensajes individuales.
  */
 public class PanelDuelo extends JPanel {
 
@@ -28,6 +28,12 @@ public class PanelDuelo extends JPanel {
     private final JLabel lblMagoA;
     /** Etiqueta de mago B. */
     private final JLabel lblMagoB;
+    /** Imagen central que alterna entre mago A y B */
+    private final JLabel lblImagenCentral;
+    /** Icono cache para mago A */
+    private ImageIcon iconoMagoA;
+    /** Icono cache para mago B */
+    private ImageIcon iconoMagoB;
     /** Etiqueta de puntaje A. */
     private final JLabel lblPuntosA;
     /** Etiqueta de puntaje B. */
@@ -36,48 +42,86 @@ public class PanelDuelo extends JPanel {
     private final JProgressBar barA;
     /** Barra de progreso de B. */
     private final JProgressBar barB;
-    /** Área de log de eventos. */
-    private final JTextArea txtLog;
+    /** Área de mensaje único (estilo Pokémon). */
+    private final JTextArea txtMensaje;
+    /** Referencias a los magos actuales para detectar turnos */
+    private Mago magoActualA;
+    private Mago magoActualB;
 
-    /** Crea el panel con disposición y estilos mejorados. */
+    /** Crea el panel con disposición estilo Pokémon. */
     public PanelDuelo() {
-        setLayout(new BorderLayout(8, 8));
+        setLayout(new BorderLayout());
+        setBackground(new Color(45, 45, 45));
 
-        banner = new JLabel("Duelo de Magos", SwingConstants.CENTER);
-        banner.setFont(banner.getFont().deriveFont(Font.BOLD, 22f));
+        // Banner superior
+        banner = new JLabel("⚔ TORNEO DE MAGOS ⚔", SwingConstants.CENTER);
+        banner.setFont(banner.getFont().deriveFont(Font.BOLD, 24f));
         banner.setOpaque(true);
-        banner.setBackground(new Color(30, 30, 60));
-        banner.setForeground(new Color(220, 220, 255));
-        banner.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        banner.setBackground(new Color(60, 60, 100));
+        banner.setForeground(new Color(255, 255, 200));
+        banner.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JPanel panelTop = new JPanel(new GridLayout(3, 2, 8, 8));
-        panelTop.setBorder(BorderFactory.createTitledBorder("Participantes"));
-        lblMagoA = new JLabel("Mago A", SwingConstants.CENTER);
-        lblMagoB = new JLabel("Mago B", SwingConstants.CENTER);
-        lblMagoA.setFont(lblMagoA.getFont().deriveFont(Font.BOLD));
-        lblMagoB.setFont(lblMagoB.getFont().deriveFont(Font.BOLD));
-        lblPuntosA = new JLabel("Puntos A: 0", SwingConstants.CENTER);
-        lblPuntosB = new JLabel("Puntos B: 0", SwingConstants.CENTER);
+        // HUD superior con nombres y puntos
+        JPanel panelHud = new JPanel(new GridLayout(2, 2, 8, 8));
+        panelHud.setBackground(new Color(45, 45, 45));
+        panelHud.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+
+        lblMagoA = new JLabel("Mago A", SwingConstants.LEFT);
+        lblMagoA.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+        lblMagoA.setForeground(Color.WHITE);
+        lblMagoB = new JLabel("Mago B", SwingConstants.RIGHT);
+        lblMagoB.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+        lblMagoB.setForeground(Color.WHITE);
+        lblPuntosA = new JLabel("Puntos A: 0", SwingConstants.LEFT);
+        lblPuntosA.setForeground(Color.WHITE);
+        lblPuntosB = new JLabel("Puntos B: 0", SwingConstants.RIGHT);
+        lblPuntosB.setForeground(Color.WHITE);
+
+        // Inicializar barras (no visibles en HUD, pero usadas por lógica existente)
         barA = new JProgressBar(0, 250);
         barB = new JProgressBar(0, 250);
-        barA.setForeground(new Color(76, 175, 80));
-        barB.setForeground(new Color(244, 67, 54));
-        panelTop.add(lblMagoA);
-        panelTop.add(lblMagoB);
-        panelTop.add(lblPuntosA);
-        panelTop.add(lblPuntosB);
-        panelTop.add(barA);
-        panelTop.add(barB);
 
-        txtLog = new JTextArea(14, 50);
-        txtLog.setEditable(false);
-        txtLog.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-        JScrollPane scroll = new JScrollPane(txtLog);
-        scroll.setBorder(BorderFactory.createTitledBorder("Eventos"));
+        panelHud.add(lblMagoA);
+        panelHud.add(lblMagoB);
+        panelHud.add(lblPuntosA);
+        panelHud.add(lblPuntosB);
+
+        // Imagen central de duelo
+        lblImagenCentral = new JLabel("", SwingConstants.CENTER);
+        lblImagenCentral.setOpaque(true);
+        lblImagenCentral.setBackground(new Color(35, 35, 35));
+        lblImagenCentral.setForeground(Color.WHITE);
+        lblImagenCentral.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 16));
+        lblImagenCentral.setText("<HTML><div style='text-align:center;color:white;font-size:16px;padding:20px;'>IMAGEN DEL DUELO<br/><br/>Coloque imágenes en:<br/>resources/mago_a.png y resources/mago_b.png</div></HTML>");
+
+        // Caja de mensaje estilo Pokémon (solo última línea visible)
+        JPanel panelMensaje = new JPanel(new BorderLayout());
+        panelMensaje.setBackground(new Color(30, 30, 30));
+        panelMensaje.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createRaisedBevelBorder(),
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
+        
+        txtMensaje = new JTextArea(2, 50);
+        txtMensaje.setEditable(false);
+        txtMensaje.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+        txtMensaje.setBackground(new Color(30, 30, 30));
+        txtMensaje.setForeground(new Color(255, 255, 150));
+        txtMensaje.setLineWrap(true);
+        txtMensaje.setWrapStyleWord(true);
+        txtMensaje.setText("¡Esperando el inicio del torneo...");
+        
+        panelMensaje.add(txtMensaje, BorderLayout.CENTER);
+
+        // Layout final
+        JPanel panelCentro = new JPanel(new BorderLayout());
+        panelCentro.setBackground(new Color(45, 45, 45));
+        panelCentro.add(panelHud, BorderLayout.NORTH);
+        panelCentro.add(lblImagenCentral, BorderLayout.CENTER);
 
         add(banner, BorderLayout.NORTH);
-        add(panelTop, BorderLayout.CENTER);
-        add(scroll, BorderLayout.SOUTH);
+        add(panelCentro, BorderLayout.CENTER);
+        add(panelMensaje, BorderLayout.SOUTH);
     }
 
     /** Configura el puntaje máximo para las barras de progreso. */
@@ -91,22 +135,39 @@ public class PanelDuelo extends JPanel {
      * @param magos lista de configuraciones de magos
      */
     public void mostrarParticipantes(List<MagoConfig> magos) {
-        if (magos.size() >= 1) {
-            lblMagoA.setText(magos.get(0).getNombre() + " (" + magos.get(0).getCasa() + ")");
-        }
-        if (magos.size() >= 2) {
-            lblMagoB.setText(magos.get(1).getNombre() + " (" + magos.get(1).getCasa() + ")");
-        }
-        txtLog.append("Participantes actualizados\n");
+        // No hacer nada porque se actualizará en mostrarDueloIniciado
     }
 
     /**
-     * Muestra un mensaje informativo en el log.
+     * Muestra un mensaje informativo.
      * @param mensaje texto
      */
     public void mostrarMensaje(String mensaje) {
-        txtLog.append(mensaje + "\n");
-        txtLog.setCaretPosition(txtLog.getDocument().getLength());
+        txtMensaje.setText(mensaje);
+    }
+
+    /**
+     * Cambia la imagen central según el mago que ataca.
+     */
+    private void alternarImagenPorTurno(Mago atacante) {
+        boolean esMagoA = (magoActualA != null && atacante.getNombre().equals(magoActualA.getNombre()));
+        if (esMagoA) {
+            if (iconoMagoA != null && iconoMagoA.getIconWidth() > 0) {
+                lblImagenCentral.setIcon(iconoMagoA);
+                lblImagenCentral.setText("");
+            } else {
+                lblImagenCentral.setIcon(null);
+                lblImagenCentral.setText("[Turno de " + atacante.getNombre() + "]\n(resources/mago_a.png no encontrado)");
+            }
+        } else {
+            if (iconoMagoB != null && iconoMagoB.getIconWidth() > 0) {
+                lblImagenCentral.setIcon(iconoMagoB);
+                lblImagenCentral.setText("");
+            } else {
+                lblImagenCentral.setIcon(null);
+                lblImagenCentral.setText("[Turno de " + atacante.getNombre() + "]\n(resources/mago_b.png no encontrado)");
+            }
+        }
     }
 
     /**
@@ -115,16 +176,15 @@ public class PanelDuelo extends JPanel {
      * @param defensor mago que defiende
      */
     public void mostrarTurno(Mago atacante, Mago defensor) {
-        txtLog.append("Turno de " + atacante.getNombre() + " contra " + defensor.getNombre() + "\n");
-        txtLog.setCaretPosition(txtLog.getDocument().getLength());
+        alternarImagenPorTurno(atacante);
+        txtMensaje.setText("Turno de " + atacante.getNombre() + " contra " + defensor.getNombre());
     }
 
     /**
      * Muestra el hechizo lanzado y puntos obtenidos.
      */
     public void mostrarHechizo(Mago atacante, Mago defensor, Hechizo hechizo, int puntos) {
-        txtLog.append(atacante.getNombre() + " lanza " + hechizo.getNombre() + " (" + puntos + " pts)\n");
-        txtLog.setCaretPosition(txtLog.getDocument().getLength());
+        txtMensaje.setText(atacante.getNombre() + " lanza " + hechizo.getNombre() + " y obtiene " + puntos + " puntos!");
     }
 
     /**
@@ -141,37 +201,59 @@ public class PanelDuelo extends JPanel {
      * Muestra el ganador del duelo actual.
      */
     public void mostrarGanador(Mago ganador, Mago perdedor) {
-        txtLog.append("Ganador del duelo: " + ganador.getNombre() + "\n");
-        txtLog.setCaretPosition(txtLog.getDocument().getLength());
+        txtMensaje.setText("¡" + ganador.getNombre() + " GANA el duelo!");
+        // Nada adicional; la imagen permanecerá en el último turno
     }
 
     /**
-     * Muestra que inicia un nuevo duelo con separador visual.
+     * Muestra que inicia un nuevo duelo.
      */
     public void mostrarDueloIniciado(Mago magoA, Mago magoB) {
-        // Actualizar las etiquetas superiores con los magos que compiten ahora
-        lblMagoA.setText(magoA.getNombre() + " (" + magoA.getCasaMagica() + ")");
-        lblMagoB.setText(magoB.getNombre() + " (" + magoB.getCasaMagica() + ")");
+        // Guardar referencias para poder resaltar
+        magoActualA = magoA;
+        magoActualB = magoB;
         
-        // Reiniciar los puntajes mostrados
+        // Actualizar las etiquetas superiores con los magos que compiten ahora
+        lblMagoA.setText(magoA.getNombre());
+        lblMagoB.setText(magoB.getNombre());
+        
+        // Reiniciar UI de puntajes
         lblPuntosA.setText("Puntos A: 0");
         lblPuntosB.setText("Puntos B: 0");
         barA.setValue(0);
         barB.setValue(0);
         
-        // Agregar separador visual en el log
-        txtLog.append("\n" + "=".repeat(80) + "\n");
-        txtLog.append("DUELO: " + magoA.getNombre() + " vs " + magoB.getNombre() + "\n");
-        txtLog.append("=".repeat(80) + "\n");
-        txtLog.setCaretPosition(txtLog.getDocument().getLength());
+        // Cargar imágenes si existen
+        cargarImagenes(magoA.getNombre(), magoB.getNombre());
+        
+        // Mensaje inicial
+        txtMensaje.setText("Comienza el duelo: " + magoA.getNombre() + " vs " + magoB.getNombre());
+    }
+
+    /**
+     * Carga las imágenes de los magos si existen.
+     */
+    private void cargarImagenes(String nombreMagoA, String nombreMagoB) {
+        // Intentar cargar imagen para mago A
+        try {
+            iconoMagoA = new ImageIcon("resources/mago_a.png");
+        } catch (Exception e) {
+            iconoMagoA = null;
+        }
+        
+        // Intentar cargar imagen para mago B
+        try {
+            iconoMagoB = new ImageIcon("resources/mago_b.png");
+        } catch (Exception e) {
+            iconoMagoB = null;
+        }
     }
 
     /**
      * Muestra que un mago está aturdido.
      */
     public void mostrarMagoAturdido(Mago mago) {
-        txtLog.append(">>> " + mago.getNombre() + " está ATURDIDO y no puede moverse <<<\n");
-        txtLog.setCaretPosition(txtLog.getDocument().getLength());
+        txtMensaje.setText(">>> " + mago.getNombre() + " está ATURDIDO y no puede moverse <<<");
     }
 }
 
