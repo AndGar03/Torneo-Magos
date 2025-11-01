@@ -1,5 +1,3 @@
 Integrantes:
-- [Nombre 1]
-- [Nombre 2]
-- [Nombre 3]
-
+- Carlos Andrés García Ramos - 20242020206
+- Daniel Felipe Santamaría Durán - 20242020023
