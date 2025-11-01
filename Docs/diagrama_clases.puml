@@ -1,0 +1,200 @@
+@startuml Diagrama de Clases - Torneo de Magos
+
+package "modelo" {
+    class Mago {
+        -nombre: String
+        -casaMagica: String
+        -puntosAcumulados: int {volatile}
+        -hechizosLanzados: int {volatile}
+        -rival: Mago {volatile}
+        -estaAturdido: boolean {volatile}
+        -campoDuelo: CampoDuelo
+        --
+        +Mago(nombre: String, casaMagica: String, campoDuelo: CampoDuelo)
+        +run(): void
+        +getNombre(): String
+        +getCasaMagica(): String
+        +getPuntosAcumulados(): int
+        +agregarPuntos(puntos: int): void
+        +resetearPuntos(): void
+        +setEstaAturdido(aturdido: boolean): void
+        +isEstaAturdido(): boolean
+        +getRival(): Mago
+        +setRival(rival: Mago): void
+        +setCampoDuelo(campo: CampoDuelo): void
+    }
+    
+    class Hechizo {
+        -nombre: String
+        -poderBase: int
+        --
+        +Hechizo(nombre: String, poderBase: int)
+        +getNombre(): String
+        +getPoderBase(): int
+    }
+    
+    class CampoDuelo {
+        {static} +PUNTAJE_VICTORIA: int = 250
+        -hechizosDisponibles: List<Hechizo>
+        -magoA: Mago
+        -magoB: Mago
+        -turnoActual: Mago
+        -random: Random
+        -listeners: List<DueloListener>
+        -hayGanador: boolean
+        --
+        +CampoDuelo(magoA: Mago, magoB: Mago, hechizos: List<Hechizo>)
+        +gestionarTurno(magoQueAtaca: Mago): void {synchronized}
+        +addListener(listener: DueloListener): void {synchronized}
+        +hayGanador(): boolean {synchronized}
+        +getMagoA(): Mago
+        +getMagoB(): Mago
+        -notificarTurno(atacante: Mago, defensor: Mago): void
+        -notificarHechizo(...): void
+        -notificarPuntajes(): void
+        -notificarGanador(...): void
+        -notificarMagoAturdido(mago: Mago): void
+        -seleccionarHechizoAleatorio(): Hechizo
+        -calcularPuntos(hechizo: Hechizo): int
+    }
+    
+    class Torneo {
+        -hechizosCompartidos: List<Hechizo>
+        -listeners: List<DueloListener>
+        --
+        +Torneo(hechizos: List<Hechizo>)
+        +addListener(listener: DueloListener): void
+        +iniciarTorneo(participantes: List<Mago>): Mago
+    }
+    
+    interface DueloListener {
+        +onTurno(campo: CampoDuelo, atacante: Mago, defensor: Mago): void
+        +onHechizoLanzado(campo: CampoDuelo, atacante: Mago, defensor: Mago, hechizo: Hechizo, puntosGanados: int): void
+        +onPuntajesActualizados(campo: CampoDuelo, magoA: Mago, magoB: Mago): void
+        +onGanador(campo: CampoDuelo, ganador: Mago, perdedor: Mago): void
+        +onMagoAturdido(campo: CampoDuelo, mago: Mago): void
+        +onDueloIniciado(campo: CampoDuelo, magoA: Mago, magoB: Mago): void
+    }
+    
+    package "util" {
+        class CargadorProperties {
+            {static} +cargar(file: File): Properties
+            {static} +construirMagosConfig(props: Properties): List<MagoConfig>
+            {static} +construirHechizos(props: Properties): List<Hechizo>
+        }
+        
+        class MagoConfig {
+            -nombre: String
+            -casa: String
+            --
+            +MagoConfig(nombre: String, casa: String)
+            +getNombre(): String
+            +getCasa(): String
+        }
+    }
+}
+
+package "vista" {
+    class VistaPrincipal {
+        -panelDuelo: PanelDuelo
+        -btnCargar: JButton
+        -btnIniciar: JButton
+        -controlador: ControladorPrincipal
+        --
+        +VistaPrincipal()
+        +setControlador(controlador: ControladorPrincipal): void
+        +getPanelDuelo(): PanelDuelo
+        -inicializarEventos(): void
+    }
+    
+    class PanelDuelo {
+        -banner: JLabel
+        -lblMagoA: JLabel
+        -lblMagoB: JLabel
+        -lblImagenCentral: JLabel
+        -lblPuntosA: JLabel
+        -lblPuntosB: JLabel
+        -barA: JProgressBar
+        -barB: JProgressBar
+        -txtMensaje: JTextArea
+        -magoActualA: Mago
+        -magoActualB: Mago
+        -iconoMagoA: ImageIcon
+        -iconoMagoB: ImageIcon
+        --
+        +PanelDuelo()
+        +configurarPuntajeMax(max: int): void
+        +mostrarParticipantes(magos: List<MagoConfig>): void
+        +mostrarMensaje(mensaje: String): void
+        +mostrarTurno(atacante: Mago, defensor: Mago): void
+        +mostrarHechizo(...): void
+        +actualizarPuntajes(magoA: Mago, magoB: Mago): void
+        +mostrarGanador(ganador: Mago, perdedor: Mago): void
+        +mostrarDueloIniciado(magoA: Mago, magoB: Mago): void
+        +mostrarMagoAturdido(mago: Mago): void
+        -alternarImagenPorTurno(atacante: Mago): void
+        -cargarImagenes(...): void
+    }
+}
+
+package "controlador" {
+    class ControladorPrincipal {
+        -vista: VistaPrincipal
+        -archivoProperties: File
+        -hechizos: List<Hechizo>
+        -magosConfig: List<MagoConfig>
+        --
+        {static} +launch(): void
+        +ControladorPrincipal(vista: VistaPrincipal)
+        +seleccionarYcargarProperties(): void
+        +iniciarTorneo(): void
+        +getPanelDuelo(): PanelDuelo
+        -ejecutarTorneo(): void
+    }
+    
+    interface DueloLanzadoListener {
+    }
+    
+    class Launcher {
+        {static} +main(args: String[]): void
+        -configurarLookAndFeel(): void
+    }
+}
+
+' Relaciones del modelo
+Mago ..|> Runnable
+Mago --> CampoDuelo : usa
+Mago --> Mago : rival
+CampoDuelo --> Mago : contiene (2)
+CampoDuelo --> Hechizo : contiene (múltiples)
+CampoDuelo --> DueloListener : notifica a
+Torneo --> CampoDuelo : crea
+Torneo --> Mago : gestiona
+Torneo --> Hechizo : contiene
+Torneo --> DueloListener : suscribe
+CargadorProperties --> Hechizo : crea
+CargadorProperties --> MagoConfig : contiene
+
+' Relaciones de la vista
+VistaPrincipal --> PanelDuelo : contiene
+VistaPrincipal --> ControladorPrincipal : usa
+PanelDuelo --> Mago : muestra
+PanelDuelo --> Hechizo : muestra
+PanelDuelo --> MagoConfig : muestra
+
+' Relaciones del controlador
+ControladorPrincipal ..|> DueloLanzadoListener
+DueloLanzadoListener --|> DueloListener
+ControladorPrincipal --> VistaPrincipal : controla
+ControladorPrincipal --> Torneo : orquesta
+ControladorPrincipal --> Mago : crea
+ControladorPrincipal --> CargadorProperties : usa
+ControladorPrincipal --> MagoConfig : usa
+Launcher --> ControladorPrincipal : inicia
+
+' Estilo
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+@enduml
+
